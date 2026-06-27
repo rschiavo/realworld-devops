@@ -1,0 +1,31 @@
+services:
+  # Serviço do Banco de Dados
+  mongodb:
+    image: mongo:6.0-jammy
+    container_name: realworld-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: always
+
+  # Serviço da API REST (Node.js)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: realworld-api
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongodb:27017/conduit
+      - DATABASE_URL=mongodb://mongodb:27017/conduit
+      - SECRET=sua_chave_secreta_super_segura_para_gerar_tokens
+    depends_on:
+      - mongodb
+    restart: always
+
+volumes:
+  mongo_data:
