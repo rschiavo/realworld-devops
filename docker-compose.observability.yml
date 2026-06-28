@@ -36,7 +36,8 @@ services:
     container_name: promtail
     restart: unless-stopped
     volumes:
-      - ./observability/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml
+      - ./promtail-config.yml:/etc/promtail/promtail-config.yml
+      - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     command: -config.file=/etc/promtail/promtail-config.yml
     networks:
@@ -67,7 +68,7 @@ services:
     container_name: grafana
     restart: unless-stopped
     ports:
-      - '3050:3000' # 🔄 Mantida a porta 3050 para evitar o conflito local
+      - '3050:3000'
     volumes:
       - grafana_data:/var/lib/grafana
     networks:

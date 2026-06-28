@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   # 1. Serviço do Banco de Dados
   mongodb:
@@ -8,6 +10,8 @@ services:
     volumes:
       - mongo_data:/data/db
     restart: always
+    networks:
+      - realworld-net
 
   # 2. Serviço da API REST (Node.js)
   api:
@@ -20,8 +24,8 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - MONGODB_URI=mongodb://mongodb:27017/conduit
-      - DATABASE_URL=mongodb://mongodb:27017/conduit
+      - DATABASE_URL=mongodb://realworld-db:27017/conduit?authSource=admin
+      - MONGODB_URI=mongodb://realworld-db:27017/conduit?authSource=admin
       - SECRET=sua_chave_secreta_super_segura_para_gerar_tokens
     depends_on:
       - mongodb
@@ -31,42 +35,13 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-
-  # 3. Centralizador de Logs (Grafana Loki)
-  loki:
-    image: grafana/loki:2.9.0
-    container_name: loki
-    ports:
-      - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
-    restart: always
-
-  # 4. Coletor de Logs (Promtail) - CORRIGIDO
-  promtail:
-    image: grafana/promtail:2.9.0
-    container_name: promtail
-    volumes:
-      # Captura os logs nativos gerados pelo Docker Desktop no Host
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      # Configuração inline do Promtail via arquivo local (criado automaticamente abaixo)
-      - ./promtail-config.yml:/etc/promtail/config.yml:ro
-    command: -config.file=/etc/promtail/config.yml
-    depends_on:
-      - loki
-    restart: always
-
-  # 5. Interface Gráfica (Grafana)
-  grafana:
-    image: grafana/grafana:10.2.0
-    container_name: grafana
-    ports:
-      - "3050:3050"  # Mapeado na porta técnica do seu laboratório
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    depends_on:
-      - loki
-    restart: always
+    networks:
+      - realworld-net
 
 volumes:
   mongo_data:
+
+networks:
+  realworld-net:
+    name: realworld-net
+    driver: bridge
