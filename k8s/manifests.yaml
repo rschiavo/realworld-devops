@@ -10,7 +10,7 @@ data:
   DATABASE_URL: "mongodb://mongo-service:27017/conduit"
   SECRET: "super-secret-key-k8s"
 ---
-# 2. Base de Dados (Deployment)
+# 2. Base de Dados (Deployment) - CORRIGIDO (Removido travamento do Replica Set)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -28,7 +28,6 @@ spec:
       containers:
       - name: mongo
         image: mongo:6.0-jammy
-        args: ["--replSet", "rs0"] # <--- ADICIONE ESTA LINHA AQUI
         ports:
         - containerPort: 27017
 ---
@@ -44,7 +43,7 @@ spec:
   selector:
     app: mongo
 ---
-# 4. A nossa API REST (Deployment)
+# 4. API REST (Deployment ajustado imagePullPolicy para suportar Kind local)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -62,7 +61,7 @@ spec:
       containers:
       - name: api
         image: realworld-api:local
-        imagePullPolicy: Never
+        imagePullPolicy: IfNotPresent  # Permitir que o cluster use o cache do nó do Kind de forma estável
         ports:
         - containerPort: 3000
         envFrom:

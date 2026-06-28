@@ -1,5 +1,5 @@
 services:
-  # Serviço do Banco de Dados
+  # 1. Serviço do Banco de Dados
   mongodb:
     image: mongo:6.0-jammy
     container_name: realworld-db
@@ -9,7 +9,7 @@ services:
       - mongo_data:/data/db
     restart: always
 
-  # Serviço da API REST (Node.js)
+  # 2. Serviço da API REST (Node.js)
   api:
     build:
       context: .
@@ -25,6 +25,47 @@ services:
       - SECRET=sua_chave_secreta_super_segura_para_gerar_tokens
     depends_on:
       - mongodb
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # 3. Centralizador de Logs (Grafana Loki)
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: always
+
+  # 4. Coletor de Logs (Promtail) - CORRIGIDO
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    volumes:
+      # Captura os logs nativos gerados pelo Docker Desktop no Host
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      # Configuração inline do Promtail via arquivo local (criado automaticamente abaixo)
+      - ./promtail-config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    restart: always
+
+  # 5. Interface Gráfica (Grafana)
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: grafana
+    ports:
+      - "3050:3050"  # Mapeado na porta técnica do seu laboratório
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - loki
     restart: always
 
 volumes:

@@ -1,0 +1,3 @@
+=== INCIDENTE DETECTADO ===
+Status: CRITICAL
+Detalhe: CRITICAL: Não foi possível conectar ao container 'container-fantasma'.
